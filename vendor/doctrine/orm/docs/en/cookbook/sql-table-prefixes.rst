@@ -39,11 +39,7 @@ appropriate autoloaders.
         public function loadClassMetadata(LoadClassMetadataEventArgs $eventArgs)
         {
             $classMetadata = $eventArgs->getClassMetadata();
-
-            if (!$classMetadata->isInheritanceTypeSingleTable() || $classMetadata->getName() === $classMetadata->rootEntityName) {
-                $classMetadata->setTableName($this->prefix . $classMetadata->getTableName());
-            }
-
+            $classMetadata->setTableName($this->prefix . $classMetadata->getTableName());
             foreach ($classMetadata->getAssociationMappings() as $fieldName => $mapping) {
                 if ($mapping['type'] == \Doctrine\ORM\Mapping\ClassMetadataInfo::MANY_TO_MANY) {
                     $mappedTableName = $classMetadata->associationMappings[$fieldName]['joinTable']['name'];

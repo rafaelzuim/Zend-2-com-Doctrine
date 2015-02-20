@@ -17,6 +17,7 @@ use Doctrine\ORM\Query\AST\PathExpression;
 use Doctrine\ORM\Query\SqlWalker;
 use Doctrine\ORM\Query\AST\SelectStatement;
 use Doctrine\DBAL\Platforms\PostgreSqlPlatform;
+use Doctrine\DBAL\Platforms\OraclePlatform;
 
 /**
  * Wraps the query in order to select root entity IDs for pagination.
@@ -120,8 +121,7 @@ class LimitSubqueryOutputWalker extends SqlWalker
             throw new \RuntimeException("Cannot count query which selects two FROM components, cannot make distinction");
         }
 
-        $fromRoot       = reset($from);
-        $rootAlias      = $fromRoot->rangeVariableDeclaration->aliasIdentificationVariable;
+        $rootAlias      = $from[0]->rangeVariableDeclaration->aliasIdentificationVariable;
         $rootClass      = $this->queryComponents[$rootAlias]['metadata'];
         $rootIdentifier = $rootClass->identifier;
 
@@ -145,10 +145,6 @@ class LimitSubqueryOutputWalker extends SqlWalker
                     }
                 }
             }
-        }
-
-        if (count($sqlIdentifier) === 0) {
-            throw new \RuntimeException('The Paginator does not support Queries which only yield ScalarResults.');
         }
 
         if (count($rootIdentifier) != count($sqlIdentifier)) {
@@ -212,7 +208,7 @@ class LimitSubqueryOutputWalker extends SqlWalker
                     }
                 }
             }
-            // remove identifier aliases
+            //remove identifier aliases
             $sqlOrderColumns = array_diff($sqlOrderColumns, $sqlIdentifier);
         }
 

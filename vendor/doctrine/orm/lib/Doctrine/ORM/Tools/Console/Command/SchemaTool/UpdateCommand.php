@@ -19,6 +19,7 @@
 
 namespace Doctrine\ORM\Tools\Console\Command\SchemaTool;
 
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -64,7 +65,7 @@ class UpdateCommand extends AbstractCommand
                 'Dumps the generated SQL statements to the screen (does not execute them).'
             ),
             new InputOption(
-                'force', 'f', InputOption::VALUE_NONE,
+                'force', null, InputOption::VALUE_NONE,
                 'Causes the generated SQL statements to be physically executed against your database.'
             ),
         ));

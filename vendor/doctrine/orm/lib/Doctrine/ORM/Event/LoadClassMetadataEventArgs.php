@@ -19,6 +19,9 @@
 
 namespace Doctrine\ORM\Event;
 
+use Doctrine\Common\EventArgs;
+use Doctrine\ORM\Mapping\ClassMetadataInfo;
+use Doctrine\ORM\EntityManager;
 use Doctrine\Common\Persistence\Event\LoadClassMetadataEventArgs as BaseLoadClassMetadataEventArgs;
 
 /**

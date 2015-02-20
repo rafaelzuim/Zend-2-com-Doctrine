@@ -19,13 +19,14 @@
 
 namespace Doctrine\ORM;
 
-use Closure;
+use Doctrine\ORM\Mapping\ClassMetadata;
+
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Selectable;
 use Doctrine\Common\Collections\Criteria;
-use Doctrine\ORM\Mapping\ClassMetadata;
-use Doctrine\ORM\Mapping\ClassMetadataInfo;
+
+use Closure;
 
 /**
  * A PersistentCollection represents a collection of elements that have persistent state.
@@ -71,7 +72,7 @@ final class PersistentCollection implements Collection, Selectable
     /**
      * The EntityManager that manages the persistence of the collection.
      *
-     * @var \Doctrine\ORM\EntityManagerInterface
+     * @var \Doctrine\ORM\EntityManager
      */
     private $em;
 
@@ -115,11 +116,11 @@ final class PersistentCollection implements Collection, Selectable
     /**
      * Creates a new persistent collection.
      *
-     * @param EntityManagerInterface $em    The EntityManager the collection will be associated with.
-     * @param ClassMetadata          $class The class descriptor of the entity type of this collection.
-     * @param Collection             $coll  The collection elements.
+     * @param EntityManager $em    The EntityManager the collection will be associated with.
+     * @param ClassMetadata $class The class descriptor of the entity type of this collection.
+     * @param array         $coll  The collection elements.
      */
-    public function __construct(EntityManagerInterface $em, $class, $coll)
+    public function __construct(EntityManager $em, $class, $coll)
     {
         $this->coll      = $coll;
         $this->em        = $em;
@@ -470,13 +471,6 @@ final class PersistentCollection implements Collection, Selectable
      */
     public function containsKey($key)
     {
-
-        if (! $this->initialized && $this->association['fetch'] === Mapping\ClassMetadataInfo::FETCH_EXTRA_LAZY
-            && isset($this->association['indexBy'])) {
-            $persister = $this->em->getUnitOfWork()->getCollectionPersister($this->association);
-
-            return $this->coll->containsKey($key) || $persister->containsKey($this, $key);
-        }
         $this->initialize();
 
         return $this->coll->containsKey($key);
@@ -524,6 +518,7 @@ final class PersistentCollection implements Collection, Selectable
     public function get($key)
     {
         if ( ! $this->initialized
+            && $this->association['type'] === Mapping\ClassMetadataInfo::ONE_TO_MANY
             && $this->association['fetch'] === Mapping\ClassMetadataInfo::FETCH_EXTRA_LAZY
             && isset($this->association['indexBy'])
         ) {
@@ -604,7 +599,9 @@ final class PersistentCollection implements Collection, Selectable
      */
     public function isEmpty()
     {
-        return $this->coll->isEmpty() && $this->count() === 0;
+        $this->initialize();
+
+        return $this->coll->isEmpty();
     }
 
     /**
@@ -781,7 +778,7 @@ final class PersistentCollection implements Collection, Selectable
     public function next()
     {
         $this->initialize();
-
+        
         return $this->coll->next();
     }
 
@@ -867,10 +864,8 @@ final class PersistentCollection implements Collection, Selectable
             return $this->coll->matching($criteria);
         }
 
-        if ($this->association['type'] === ClassMetadata::MANY_TO_MANY) {
-            $persister = $this->em->getUnitOfWork()->getCollectionPersister($this->association);
-
-            return new ArrayCollection($persister->loadCriteria($this, $criteria));
+        if ($this->association['type'] !== ClassMetadata::ONE_TO_MANY) {
+            throw new \RuntimeException("Matching Criteria on PersistentCollection only works on OneToMany associations at the moment.");
         }
 
         $builder         = Criteria::expr();
@@ -878,13 +873,10 @@ final class PersistentCollection implements Collection, Selectable
         $expression      = $criteria->getWhereExpression();
         $expression      = $expression ? $builder->andX($expression, $ownerExpression) : $ownerExpression;
 
-        $criteria = clone $criteria;
         $criteria->where($expression);
 
         $persister = $this->em->getUnitOfWork()->getEntityPersister($this->association['targetEntity']);
 
-        return ($this->association['fetch'] === ClassMetadataInfo::FETCH_EXTRA_LAZY)
-            ? new LazyCriteriaCollection($persister, $criteria)
-            : new ArrayCollection($persister->loadCriteria($criteria));
+        return new ArrayCollection($persister->loadCriteria($criteria));
     }
 }

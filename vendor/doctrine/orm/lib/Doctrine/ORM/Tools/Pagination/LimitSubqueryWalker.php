@@ -20,10 +20,9 @@ namespace Doctrine\ORM\Tools\Pagination;
 
 use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\Query\TreeWalkerAdapter;
-use Doctrine\ORM\Query\AST\Functions\IdentityFunction;
-use Doctrine\ORM\Query\AST\PathExpression;
-use Doctrine\ORM\Query\AST\SelectExpression;
 use Doctrine\ORM\Query\AST\SelectStatement;
+use Doctrine\ORM\Query\AST\SelectExpression;
+use Doctrine\ORM\Query\AST\PathExpression;
 
 /**
  * Replaces the selectClause of the AST with a SELECT DISTINCT root.id equivalent.
@@ -60,36 +59,37 @@ class LimitSubqueryWalker extends TreeWalkerAdapter
      */
     public function walkSelectStatement(SelectStatement $AST)
     {
-        $queryComponents = $this->_getQueryComponents();
-        // Get the root entity and alias from the AST fromClause
-        $from      = $AST->fromClause->identificationVariableDeclarations;
-        $fromRoot  = reset($from);
-        $rootAlias = $fromRoot->rangeVariableDeclaration->aliasIdentificationVariable;
-        $rootClass = $queryComponents[$rootAlias]['metadata'];
+        $parent = null;
+        $parentName = null;
         $selectExpressions = array();
 
-        foreach ($queryComponents as $dqlAlias => $qComp) {
+        foreach ($this->_getQueryComponents() as $dqlAlias => $qComp) {
             // Preserve mixed data in query for ordering.
             if (isset($qComp['resultVariable'])) {
                 $selectExpressions[] = new SelectExpression($qComp['resultVariable'], $dqlAlias);
                 continue;
             }
+
+            if ($qComp['parent'] === null && $qComp['nestingLevel'] == 0) {
+                $parent = $qComp;
+                $parentName = $dqlAlias;
+                continue;
+            }
         }
-        
-        $identifier = $rootClass->getSingleIdentifierFieldName();
-        
-        if (isset($rootClass->associationMappings[$identifier])) {
+
+        $identifier = $parent['metadata']->getSingleIdentifierFieldName();
+        if (isset($parent['metadata']->associationMappings[$identifier])) {
             throw new \RuntimeException("Paginating an entity with foreign key as identifier only works when using the Output Walkers. Call Paginator#setUseOutputWalkers(true) before iterating the paginator.");
         }
 
         $this->_getQuery()->setHint(
             self::IDENTIFIER_TYPE,
-            Type::getType($rootClass->getTypeOfField($identifier))
+            Type::getType($parent['metadata']->getTypeOfField($identifier))
         );
 
         $pathExpression = new PathExpression(
             PathExpression::TYPE_STATE_FIELD | PathExpression::TYPE_SINGLE_VALUED_ASSOCIATION,
-            $rootAlias,
+            $parentName,
             $identifier
         );
         $pathExpression->type = PathExpression::TYPE_STATE_FIELD;
@@ -99,37 +99,21 @@ class LimitSubqueryWalker extends TreeWalkerAdapter
 
         if (isset($AST->orderByClause)) {
             foreach ($AST->orderByClause->orderByItems as $item) {
-                if ( ! $item->expression instanceof PathExpression) {
-                    continue;
+                if ($item->expression instanceof PathExpression) {
+                    $pathExpression = new PathExpression(
+                        PathExpression::TYPE_STATE_FIELD | PathExpression::TYPE_SINGLE_VALUED_ASSOCIATION,
+                        $item->expression->identificationVariable,
+                        $item->expression->field
+                    );
+                    $pathExpression->type = PathExpression::TYPE_STATE_FIELD;
+                    $AST->selectClause->selectExpressions[] = new SelectExpression(
+                        $pathExpression,
+                        '_dctrn_ord' . $this->_aliasCounter++
+                    );
                 }
-                
-                $AST->selectClause->selectExpressions[] = new SelectExpression(
-                    $this->createSelectExpressionItem($item->expression),
-                    '_dctrn_ord' . $this->_aliasCounter++
-                );
             }
         }
 
         $AST->selectClause->isDistinct = true;
-    }
-    
-    /**
-     * Retrieve either an IdentityFunction (IDENTITY(u.assoc)) or a state field (u.name).
-     * 
-     * @param \Doctrine\ORM\Query\AST\PathExpression $pathExpression
-     * 
-     * @return \Doctrine\ORM\Query\AST\Functions\IdentityFunction
-     */
-    private function createSelectExpressionItem(PathExpression $pathExpression)
-    {
-        if ($pathExpression->type === PathExpression::TYPE_SINGLE_VALUED_ASSOCIATION) {
-            $identity = new IdentityFunction('identity');
-            
-            $identity->pathExpression = clone $pathExpression;
-            
-            return $identity;
-        }
-        
-        return clone $pathExpression;
     }
 }

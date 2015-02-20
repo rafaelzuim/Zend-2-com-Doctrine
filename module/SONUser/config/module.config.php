@@ -14,12 +14,13 @@ return array(
                         )
                 )
         ),
+
         'controllers' => array(
                 'invokables'	=> array(
                         'SONUser\Controller\Index' => 'SOUser\Controller\IndexController',
-
                 )
         ),
+
         'view_manager' => array(
                 'display_not_found_reason' => true,
                 'display_exceptions'       => true,
@@ -35,6 +36,20 @@ return array(
                 'template_path_stack' => array(
                         __DIR__ . '/../view',
                 ),
+        ),
+        'doctrine' => array(
+                'driver' => array(
+                        __NAMESPACE__ .'_driver' => array(
+                                    'class' => 'Doctrine\ORM\Mapping\Driver\AnnotationDriver',
+                                    'cache' => 'array' ,
+                                    'paths' => array(__DIR__ . '/../src/' . __NAMESPACE__ . '/Entity')
+                                ),
+                        'orc_default' => array(
+                                'drivers' => array(
+                                        __NAMESPACE__ . '\Entity' => __NAMESPACE__ . '_driver'
+                                )
+                        )
+                )
         ),
         'data-fixture' => array(
                 'SONUser_fixture' => __DIR__ . '/../src/SONUser/Fixture'

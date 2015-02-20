@@ -232,7 +232,7 @@ Example usage
     // Setup custom mapping type
     use Doctrine\DBAL\Types\Type;
 
-    Type::addType('point', 'Geo\Types\PointType');
+    Type::addType('point', 'Geo\Types\Point');
     $em->getConnection()->getDatabasePlatform()->registerDoctrineTypeMapping('point', 'point');
 
     // Store a Location object

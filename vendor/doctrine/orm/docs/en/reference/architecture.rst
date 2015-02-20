@@ -12,13 +12,13 @@ As the term ORM already hints at, Doctrine 2 aims to simplify the
 translation between database rows and the PHP object model. The
 primary use case for Doctrine are therefore applications that
 utilize the Object-Oriented Programming Paradigm. For applications
-that do not primarily work with objects Doctrine 2 is not suited very
+that not primarily work with objects Doctrine 2 is not suited very
 well.
 
 Requirements
 ------------
 
-Doctrine 2 requires a minimum of PHP 5.4. For greatly improved
+Doctrine 2 requires a minimum of PHP 5.3.0. For greatly improved
 performance it is also recommended that you use APC with PHP.
 
 Doctrine 2 Packages
