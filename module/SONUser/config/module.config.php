@@ -7,9 +7,11 @@ return array(
                             'type' 		=> 'Literal',
                             'options'	=> array(
                                     'route' 		=> '/register',
-                                    '__NAMESPACE__'	=> 'SONUser/Controller' ,
-                                    'controller'	=> 'Index',
-                                    'action'		=> 'register'
+                                    'defaults' => array(
+                                        '__NAMESPACE__'	=> 'SONUser/Controller' ,
+                                        'controller'	=> 'Index',
+                                        'action'		=> 'register'
+                                    )
                             )
                         )
                 )
@@ -17,7 +19,7 @@ return array(
 
         'controllers' => array(
                 'invokables'	=> array(
-                        'SONUser\Controller\Index' => 'SOUser\Controller\IndexController',
+                        'SONUser\Controller\Index' => 'SONUser\Controller\IndexController',
                 )
         ),
 
@@ -29,7 +31,7 @@ return array(
                 'exception_template'       => 'error/index',
                 'template_map' => array(
                         'layout/layout'           => __DIR__ . '/../view/layout/layout.phtml',
-                        'application/index/index' => __DIR__ . '/../view/application/index/index.phtml',
+                        'application/index' 	  => __DIR__ . '/../view/application/index/index.phtml',
                         'error/404'               => __DIR__ . '/../view/error/404.phtml',
                         'error/index'             => __DIR__ . '/../view/error/index.phtml',
                 ),

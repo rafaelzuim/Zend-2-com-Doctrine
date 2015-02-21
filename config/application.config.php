@@ -7,7 +7,7 @@ return array(
         'DoctrineORMModule',
          'DoctrineDataFixtureModule',
         'SONBase',
-        #'SONUser',
+        'SONUser',
 
     ),
 
