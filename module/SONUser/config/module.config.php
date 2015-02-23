@@ -46,14 +46,16 @@ return array(
                                     'cache' => 'array' ,
                                     'paths' => array(__DIR__ . '/../src/' . __NAMESPACE__ . '/Entity')
                                 ),
-                        'orc_default' => array(
+                        'orm_default' => array(
                                 'drivers' => array(
                                         __NAMESPACE__ . '\Entity' => __NAMESPACE__ . '_driver'
                                 )
                         )
+                ),
+                'fixture' => array(
+                        'SONUser_fixture' => __DIR__ . '/../src/SONUser/Fixture'
                 )
         ),
-        'data-fixture' => array(
-                'SONUser_fixture' => __DIR__ . '/../src/SONUser/Fixture'
-        )
+
+
 );
