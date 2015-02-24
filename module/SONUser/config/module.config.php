@@ -13,6 +13,16 @@ return array(
                                         'action'		=> 'register'
                                     )
                             )
+                        ),
+                        'sonuser-activate' => array(
+                            'type' 		=> 'Segment',
+                            'options' 	=> array(
+                                'route' 	=> '/register/activate[/:key ]',
+                                'defaults'	=> array(
+                                    'controller' => 'SONUser\Controller\Index',
+                                    'action'	 => 'activate'
+                                )
+                            )
                         )
                 )
         ),
